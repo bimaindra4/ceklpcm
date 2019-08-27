@@ -40,7 +40,6 @@
                                 <th>OTF</th>
                                 <th>LAP</th>
                                 <th>JELAS</th>
-                                <th>Status Akhir</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -57,16 +56,14 @@
                                     <td><?php echo $row['nama_pasien'] ?></td>
                                     <td><?php echo $row['no_rm'] ?></td>
                                     <td><?php echo ucfirst($row['status_awal']) ?></td>
-                                    <td></td>
+                                    <td><?php echo $row['formulir'] ?></td>
                                     <td><?php echo $row['iden'] ?></td>
                                     <td><?php echo $row['oten'] ?></td>
                                     <td><?php echo $row['lapp'] ?></td>
                                     <td><?php echo $row['penc'] ?></td>
-                                    <td></td>
                                     <td>
                                         <a href="<?php echo site_url('pasien/edit_form/'.$row['id_klpcm']) ?>" class="btn blue btn-xs btn-outline">Edit</a>
-                                        <a href="<?php echo site_url('pasien/hapus_pasien/'.$row['id_klpcm']) ?>" class="btn red btn-xs btn-outline">Hapus</a>
-                                        <!-- <a href="<?php //echo site_url('klpcm/hasil_klpcm/'.$row['no_rm']) ?>" class="btn blue btn-xs btn-outline">Cek</a> -->
+                                        <a href="<?php echo site_url('pasien/hapus_klpcm/'.$row['id_klpcm']) ?>" class="btn red btn-xs btn-outline">Hapus</a>
                                     </td>
                                 </tr>
                             <?php $no++; } ?>

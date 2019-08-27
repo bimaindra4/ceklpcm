@@ -39,23 +39,21 @@ class Pasien extends MX_Controller {
 					$psn["lapp"] = ($row->lap_penting == "L" ? '<span class="label label-success">Lengkap</span>' : '<span class="label label-danger">Belum</span>');
 					$psn["penc"] = ($row->pencatatan == "L" ? '<span class="label label-success">Lengkap</span>' : '<span class="label label-danger">Belum</span>');
 
-					$tlf = $this->M_pasien->getDetailTLForm($row->no_rm);
+					$tlf = $this->M_pasien->getDetailTLForm($row->id_klpcm);
+					$psn["formulir"] = "";
 					foreach($tlf->result() as $rtlf) {
 						if($rtlf->keterangan == "identitas") {
-							$psn["iden"] .= $rtlf->rawat_inap." / ";
+							$psn["formulir"] .= $rtlf->rawat_inap." / ";
 						} elseif($rtlf->keterangan == "otentifikasi") {
-							$psn["oten"] .= $rtlf->rawat_inap." / ";
+							$psn["formulir"] .= $rtlf->rawat_inap." / ";
 						} elseif($rtlf->keterangan == "lap_penting") {
-							$psn["lapp"] .= $rtlf->rawat_inap." / ";
+							$psn["formulir"] .= $rtlf->rawat_inap." / ";
 						} elseif($rtlf->keterangan == "pencatatan") {
-							$psn["penc"] .= $rtlf->rawat_inap." / ";
+							$psn["formulir"] .= $rtlf->rawat_inap." / ";
 						}
 					}
 
-					$psn["iden"] = rtrim($psn["iden"]," / ");
-					$psn["oten"] = rtrim($psn["oten"]," / ");
-					$psn["lapp"] = rtrim($psn["lapp"]," / ");
-					$psn["penc"] = rtrim($psn["penc"]," / ");
+					$psn["formulir"] = rtrim($psn["formulir"]," / ");
 
 					array_push($data['pasien'], $psn);
 				}
@@ -144,9 +142,7 @@ class Pasien extends MX_Controller {
 				$this->M_pasien->insertPasien($id);
 				$this->M_pasien->insertRM();
 				$this->M_pasien->insertRawatInap($ri);
-				//redirect("pasien/data");
-			} elseif($status == 2) {
-
+				redirect("pasien/data");
 			} else {
 				redirect('login');
 			}
@@ -172,7 +168,7 @@ class Pasien extends MX_Controller {
 		}
 	}
 
-	function hapus_pasien($val) {
+	function hapus_klpcm($val) {
 		$session = $this->App_Model->get_session();
 		if (!$session['session_userid'] && !$session['session_status']){
 			redirect('login');
@@ -180,11 +176,8 @@ class Pasien extends MX_Controller {
 			$id_user = $session['session_userid'];
 			$status = $session['session_status'];
 			if($status == 1) {
-				$this->M_pasien->deletePasien($val);
-		
+				$this->M_pasien->deleteKLPCM($val);
 				redirect("pasien/data");
-			} elseif($status == 2) {
-
 			} else {
 				redirect('login');
 			}

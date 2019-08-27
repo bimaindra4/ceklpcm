@@ -64,8 +64,8 @@ class M_pasien extends CI_Model {
     function getDetailTLForm_Dokter($id) {
         $this->db->select("tri.*, fri.rawat_inap");
         $this->db->join("form_rawat_inap fri", "tri.id_rawat_inap = fri.id_inap");
-        $this->db->join("rekam_medis rm", "tri.no_rm = rm.no_rm");
-        $this->db->where("rm.instalasi_dpjp", $id);
+        $this->db->join("rekam_medis rm", "tri.id_klpcm = rm.id_klpcm");
+        $this->db->where("rm.dpjp", $id);
         $q = $this->db->get("tl_rawat_inap tri");
 
         return $q;
@@ -88,7 +88,7 @@ class M_pasien extends CI_Model {
 
         $this->db->select("d.id_dokter, d.nama_dokter, COUNT(rm.no_rm) AS total_drm");
         $this->db->from("rekam_medis rm");
-        $this->db->join("dokter d", "rm.instalasi_dpjp = d.id_dokter", "right");
+        $this->db->join("dokter d", "rm.dpjp = d.id_dokter", "right");
 
         if($taw != "" || $tak != "") {
             $this->db->join("pasien p", "rm.no_rm = p.no_rm");
@@ -104,39 +104,39 @@ class M_pasien extends CI_Model {
             if($taw != "" || $tak != "") {
                 // Hitung DRM Lengkap
                 $this->db->select("
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.identitas='$l' AND rm.instalasi_dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.otentifikasi='$l' AND rm.instalasi_dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.lap_penting='$l' AND rm.instalasi_dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.pencatatan='$l' AND rm.instalasi_dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak') AS lengkap
+                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.identitas='$l' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
+                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.otentifikasi='$l' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
+                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.lap_penting='$l' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
+                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.pencatatan='$l' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak') AS lengkap
                 ");
                 $this->db->from("rekam_medis");
                 $drm_lkp = $this->db->get()->row()->lengkap;
 
                 $this->db->select("
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.identitas='$tl' AND rm.instalasi_dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.otentifikasi='$tl' AND rm.instalasi_dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.lap_penting='$tl' AND rm.instalasi_dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.pencatatan='$tl' AND rm.instalasi_dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak') AS tdklengkap
+                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.identitas='$tl' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
+                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.otentifikasi='$tl' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
+                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.lap_penting='$tl' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
+                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.pencatatan='$tl' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak') AS tdklengkap
                 ");
                 $this->db->from("rekam_medis");
                 $drm_tlkp = $this->db->get()->row()->tdklengkap;
             } else {
                 // Hitung DRM Lengkap
                 $this->db->select("
-                    (SELECT COUNT(*) FROM rekam_medis WHERE identitas='$l' AND instalasi_dpjp=$row->id_dokter)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE otentifikasi='$l' AND instalasi_dpjp=$row->id_dokter)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE lap_penting='$l' AND instalasi_dpjp=$row->id_dokter)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE pencatatan='$l' AND instalasi_dpjp=$row->id_dokter) AS lengkap
+                    (SELECT COUNT(*) FROM rekam_medis WHERE identitas='$l' AND dpjp=$row->id_dokter)+
+                    (SELECT COUNT(*) FROM rekam_medis WHERE otentifikasi='$l' AND dpjp=$row->id_dokter)+
+                    (SELECT COUNT(*) FROM rekam_medis WHERE lap_penting='$l' AND dpjp=$row->id_dokter)+
+                    (SELECT COUNT(*) FROM rekam_medis WHERE pencatatan='$l' AND dpjp=$row->id_dokter) AS lengkap
                 ");
                 $this->db->from("rekam_medis");
                 $drm_lkp = $this->db->get()->row()->lengkap;
 
                 // Hitung DRM Tidak Lengkap
                 $this->db->select("
-                    (SELECT COUNT(*) FROM rekam_medis WHERE identitas='$tl' AND instalasi_dpjp=$row->id_dokter)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE otentifikasi='$tl' AND instalasi_dpjp=$row->id_dokter)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE lap_penting='$tl' AND instalasi_dpjp=$row->id_dokter)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE pencatatan='$tl' AND instalasi_dpjp=$row->id_dokter) AS tdklengkap
+                    (SELECT COUNT(*) FROM rekam_medis WHERE identitas='$tl' AND dpjp=$row->id_dokter)+
+                    (SELECT COUNT(*) FROM rekam_medis WHERE otentifikasi='$tl' AND dpjp=$row->id_dokter)+
+                    (SELECT COUNT(*) FROM rekam_medis WHERE lap_penting='$tl' AND dpjp=$row->id_dokter)+
+                    (SELECT COUNT(*) FROM rekam_medis WHERE pencatatan='$tl' AND dpjp=$row->id_dokter) AS tdklengkap
                 ");
                 $this->db->from("rekam_medis");
                 $drm_tlkp = $this->db->get()->row()->tdklengkap;
@@ -358,50 +358,50 @@ class M_pasien extends CI_Model {
 
     function insertRawatInap($data) {
         if($data['iden']['dokumen'] == "T") {
-            foreach($data['iden']['data'] as $row) {
-                $data = [
-                    "id_rawat_inap" => $row,
+            foreach($data['iden']['data'] as $rows) {
+                $iden = [
+                    "id_rawat_inap" => $rows,
                     "id_klpcm" => $this->getLastIDKlpcm(),
                     "keterangan" => "identitas"
                 ];
 
-                $this->db->insert("tl_rawat_inap", $data);
+                $this->db->insert("tl_rawat_inap", $iden);
             }
         }
 
         if($data['oten']['dokumen'] == "T") {
-            foreach($data['oten']['data'] as $row) {
-                $data = [
-                    "id_rawat_inap" => $row,
+            foreach($data['oten']['data'] as $rowd) {
+                $oten = [
+                    "id_rawat_inap" => $rowd,
                     "id_klpcm" => $this->getLastIDKlpcm(),
                     "keterangan" => "otentifikasi"
                 ];
 
-                $this->db->insert("tl_rawat_inap", $data);
+                $this->db->insert("tl_rawat_inap", $oten);
             }
         }
 
         if($data['lap']['dokumen'] == "T") {
-            foreach($data['lap']['data'] as $row) {
-                $data = [
-                    "id_rawat_inap" => $row,
+            foreach($data['lap']['data'] as $rowt) {
+                $lap = [
+                    "id_rawat_inap" => $rowt,
                     "id_klpcm" => $this->getLastIDKlpcm(),
                     "keterangan" => "lap_penting"
                 ];
 
-                $this->db->insert("tl_rawat_inap", $data);
+                $this->db->insert("tl_rawat_inap", $lap);
             }
         }
 
         if($data['catat']['dokumen'] == "T") {
-            foreach($data['catat']['data'] as $row) {
-                $data = [
-                    "id_rawat_inap" => $row,
+            foreach($data['catat']['data'] as $rowe) {
+                $catat = [
+                    "id_rawat_inap" => $rowe,
                     "id_klpcm" => $this->getLastIDKlpcm(),
                     "keterangan" => "pencatatan"
                 ];
 
-                $this->db->insert("tl_rawat_inap", $data);
+                $this->db->insert("tl_rawat_inap", $catat);
             }
         }
     }
@@ -421,20 +421,8 @@ class M_pasien extends CI_Model {
         $this->db->update("rekam_medis", $data, array("id_klpcm" => $val));
     }
 
-    function deletePasien($val) {
-        // $val = id_pasien
-        // get no_rm from pasien
-        $this->db->select("no_rm");
-        $this->db->from("pasien");
-        $this->db->where("id_pasien", $val);
-        $getId = $this->db->get()->row();
-        $no_rm = $getId->no_rm;
-
-        // delete pasien
-        $this->db->delete("pasien", array("id_pasien" => $val));
-
-        // delete rekam_medis
-        $this->db->delete("rekam_medis", array("no_rm" => $no_rm));
+    function deleteKLPCM($val) {
+        $this->db->delete("rekam_medis", array("id_klpcm" => $val));
     }
 
     function generateData($val) {
@@ -442,10 +430,6 @@ class M_pasien extends CI_Model {
         date_default_timezone_set("Asia/Jakarta");
 
         for($i=0; $i<count($val); $i++) {
-            // create dokter_1 & dokter_2
-            ($val[$i]['dokter1'] == "-") ? $d1 = NULL : $d1 = $val[$i]['dokter1'];
-            ($val[$i]['dokter2'] == "-") ? $d2 = NULL : $d2 = $val[$i]['dokter2'];
-
             $dpjp = $this->getIDDokter($val[$i]['instalasi']);
             $d1 = $this->getIDDokter($d1);
             $d2 = $this->getIDDokter($d2);
@@ -454,9 +438,7 @@ class M_pasien extends CI_Model {
             // insert to rekam_medik
             $dat1 = array(
                 "no_rm" => $val[$i]['no_rm'],
-                "instalasi_dpjp" => $dpjp,
-                "dokter_1" => $d1,
-                "dokter_2" => $d2,
+                "dpjp" => $dpjp,
                 "id_ruang" => $ruang,
                 "identitas" => NULL,
                 "otentifikasi" => NULL,
