@@ -105,7 +105,7 @@ class Pasien extends MX_Controller {
 			if($status == 1) {
 				$data['pasien'] = $this->M_pasien->getDetailPasien($val);
 				$data['dokter'] = $this->M_pasien->getAllDokter();
-				$data['ruang_ins'] = $this->M_pasien->getAllRuang();
+				$data['ruang'] = $this->M_pasien->getAllRuang();
 				$data['namamodule'] = "pasien";
 				$data['namafileview'] = "v-rmedik-pasien-edit";
 				echo Modules::run('template/rmedik_template', $data);

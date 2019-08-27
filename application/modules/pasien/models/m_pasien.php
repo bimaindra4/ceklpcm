@@ -24,10 +24,10 @@ class M_pasien extends CI_Model {
     }
 
     function getDetailPasien($val) {
-        $this->db->select("p.*, d.nama_dokter AS dpjp, rm.id_ruang");
-        $this->db->join("rekam_medis rm", "p.id_pasien = rm.id_pasien");
+        $this->db->select("p.*, d.nama_dokter AS dpjp, rm.*");
+        $this->db->join("rekam_medis rm", "p.no_rm = rm.no_rm");
         $this->db->join("dokter d", "rm.dpjp = d.id_dokter");
-        $this->db->where("p.id_pasien", $val);
+        $this->db->where("rm.id_klpcm", $val);
         $db = $this->db->get("pasien p");
         return $db->row();
     }
@@ -411,17 +411,14 @@ class M_pasien extends CI_Model {
         date_default_timezone_set("Asia/Jakarta");
         $date = date("Y-m-d", strtotime($this->input->post("tglmrs")));
 
-        $dat1 = array(
-            "nama_pasien" => $this->input->post("nama"),
+        $data = array(
+            "tanggal_mrs" => $date,
+            "dpjp" => ($this->input->post("dpjp") == "" ? NULL : $this->input->post("dpjp")),
+            "id_ruang" => ($this->input->post('ruang') == "" ? NULL : $this->input->post('ruang')), 
+            "status_awal" => $this->input->post('stts_awal')
         );
 
-        $this->db->update("pasien", $dat1, array("id_pasien" => $val));
-
-        $dat2 = array(
-            "id_ruang" => $this->input->post('ruang')
-        );
-
-        $this->db->update("rekam_medis", $dat2, array("no_rm" => $this->input->post("no_rm")));
+        $this->db->update("rekam_medis", $data, array("id_klpcm" => $val));
     }
 
     function deletePasien($val) {
