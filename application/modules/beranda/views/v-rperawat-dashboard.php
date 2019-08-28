@@ -77,9 +77,9 @@
                             <tr>
                                 <th>No</th>
                                 <th>Dokter</th>
-                                <th>Total Cek DRM</th>
                                 <th>DRM Lengkap</th>
-                                <th>DRM Tidak Lengkap</th>
+                                <th>DRM Belum</th>
+                                <th>Total DRM</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
@@ -87,11 +87,11 @@
                             <?php $no=1; foreach($dokter_lap as $row) { ?>
                             <tr class="odd gradeX">
                                 <td width="50"><?php echo $no ?></td>
-                                <td width="250"><?php echo $row['nama_dokter'] ?></td>
-                                <td width="50" class="text-center"><?php echo $row['total_drm'] ?></td>
+                                <td><?php echo $row['nama_dokter'] ?></td>
                                 <td width="50" class="text-center"><?php echo $row['drm_lengkap'] ?></td>
                                 <td width="50" class="text-center"><?php echo $row['drm_tdk_lengkap'] ?></td>
-                                <td>
+                                <td width="50" class="text-center"><?php echo $row['total_drm'] ?></td>
+                                <td width="70">
                                     <a href="#" 
                                        class="btn btn-outline btn-xs blue detailRM" 
                                        data-id="<?php echo $row['id_dokter'] ?>" 

@@ -61,7 +61,6 @@ class Beranda extends MX_Controller {
 					}
 				}
 
-
 				echo '
 	                <p><b>RM '.$row->no_rm.'</b></p>
 	                <table class="table table-bordered">

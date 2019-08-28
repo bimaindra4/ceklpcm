@@ -21,81 +21,73 @@ class M_beranda extends CI_Model {
 
     function getNumRMLengkap() {
         $db = $this->db->query("
-            SELECT
-                (SELECT COUNT(*) FROM rekam_medis WHERE identitas='L')+
-                (SELECT COUNT(*) FROM rekam_medis WHERE otentifikasi='L')+
-                (SELECT COUNT(*) FROM rekam_medis WHERE lap_penting='L')+
-                (SELECT COUNT(*) FROM rekam_medis WHERE pencatatan='L')
-                    AS rm_lengkap
-            FROM rekam_medis LIMIT 1
-        ");
+            SELECT IFNULL(SUM(IF(identitas='L' AND otentifikasi='L' AND lap_penting='L' AND pencatatan='L', 1, 0)), 0) AS lengkap
+            FROM rekam_medis");
         
         $res = $db->row();
         if($res == null) {
             return 0;
         } else {
-            return $res->rm_lengkap;
+            return $res->lengkap;
         }
     }
 
     function getNumRMTidakLengkap() {
         $db = $this->db->query("
-            SELECT
-                (SELECT COUNT(*) FROM rekam_medis WHERE identitas='T')+
-                (SELECT COUNT(*) FROM rekam_medis WHERE otentifikasi='T')+
-                (SELECT COUNT(*) FROM rekam_medis WHERE lap_penting='T')+
-                (SELECT COUNT(*) FROM rekam_medis WHERE pencatatan='T')
-                    AS rm_tdk_lengkap
-            FROM rekam_medis LIMIT 1
+            SELECT IFNULL(SUM(IF(identitas='T' OR otentifikasi='T' OR lap_penting='T' OR pencatatan='T', 1, 0)), 0) AS tdklengkap
+            FROM rekam_medis
         ");
         
         $res = $db->row();
         if($res == null) {
             return 0;
         } else {
-            return $res->rm_tdk_lengkap;
+            return $res->tdklengkap;
         }
     }
 
     function getDokterLap() {
         $l = "L";
-        $tl = "TL";
+        $tl = "T";
         $dat = [];
 
-        $this->db->select("d.id_dokter, d.nama_dokter, COUNT(rm.no_rm) AS total_drm, rm.instalasi_dpjp");
+        $this->db->select("d.id_dokter, d.nama_dokter, rm.dpjp");
         $this->db->from("rekam_medis rm");
-        $this->db->join("dokter d", "rm.instalasi_dpjp = d.id_dokter", "right");
+        $this->db->join("dokter d", "rm.dpjp = d.id_dokter", "right");
         $this->db->group_by("d.id_dokter");
         $this->db->order_by("d.id_dokter");
         $db = $this->db->get();
 
         foreach($db->result() as $row) {
-            ($row->instalasi_dpjp == NULL) ? $dpjp = "0" : $dpjp = $row->instalasi_dpjp;
+            ($row->dpjp == NULL) ? $dpjp = "0" : $dpjp = $row->dpjp;
             
             // Hitung DRM Lengkap
-            $this->db->select("
-                (SELECT COUNT(*) FROM rekam_medis WHERE identitas='$l' AND instalasi_dpjp=$dpjp)+
-                (SELECT COUNT(*) FROM rekam_medis WHERE otentifikasi='$l' AND instalasi_dpjp=$dpjp)+
-                (SELECT COUNT(*) FROM rekam_medis WHERE lap_penting='$l' AND instalasi_dpjp=$dpjp)+
-                (SELECT COUNT(*) FROM rekam_medis WHERE pencatatan='$l' AND instalasi_dpjp=$dpjp) AS lengkap
-            ");
-            $this->db->from("rekam_medis");
-            $drm_lkp = $this->db->get()->row()->lengkap;
-
+            $sql = "
+                SELECT IFNULL(SUM(IF(identitas='$l' AND otentifikasi='$l' AND lap_penting='$l' AND pencatatan='$l', 1, 0)), 0) AS lengkap
+                FROM rekam_medis
+                WHERE dpjp='$row->id_dokter'
+            ";
+            $res = $this->db->query($sql);
+            $drm_lkp = (empty($res->row()) ? 0 : $res->row()->lengkap);
             // Hitung DRM Tidak Lengkap
-            $this->db->select("
-                (SELECT COUNT(*) FROM rekam_medis WHERE identitas='$tl' AND instalasi_dpjp=$dpjp)+
-                (SELECT COUNT(*) FROM rekam_medis WHERE otentifikasi='$tl' AND instalasi_dpjp=$dpjp)+
-                (SELECT COUNT(*) FROM rekam_medis WHERE lap_penting='$tl' AND instalasi_dpjp=$dpjp)+
-                (SELECT COUNT(*) FROM rekam_medis WHERE pencatatan='$tl' AND instalasi_dpjp=$dpjp) AS tdklengkap
-            ");
-            $this->db->from("rekam_medis");
-            $drm_tlkp = $this->db->get()->row()->tdklengkap;
+            $sql = "
+                SELECT IFNULL(SUM(IF(identitas='$tl' OR otentifikasi='$tl' OR lap_penting='$tl' OR pencatatan='$tl', 1, 0)), 0) AS tdklengkap
+                FROM rekam_medis
+                WHERE dpjp='$row->id_dokter'
+            ";
+            $res = $this->db->query($sql);
+            $drm_tlkp = (empty($res->row()) ? 0 : $res->row()->tdklengkap);
+
+            if($drm_lkp == 0 && $drm_tlkp == 0) {
+                $total_drm = 0;
+            } else {
+                $total_drm = $drm_lkp + $drm_tlkp;
+            }
 
             $data = [
                 "id_dokter" => $row->id_dokter,
                 "nama_dokter" => $row->nama_dokter,
-                "total_drm" => 4*$row->total_drm,
+                "total_drm" => $total_drm,
                 "drm_lengkap" => $drm_lkp,
                 "drm_tdk_lengkap" => $drm_tlkp,
             ];
@@ -109,7 +101,7 @@ class M_beranda extends CI_Model {
     function getDetailRM($id) {
         $this->db->select("no_rm, identitas, otentifikasi, lap_penting, pencatatan");
         $this->db->from("rekam_medis");
-        $this->db->where("instalasi_dpjp", $id);
+        $this->db->where("dpjp", $id);
         $this->db->where("identitas", "T");
         $this->db->or_where("otentifikasi", "T");
         $this->db->or_where("lap_penting", "T");
@@ -130,7 +122,7 @@ class M_beranda extends CI_Model {
 
     function getRMFromRM($id) {
         $this->db->select("rm.no_rm, d.nama_dokter AS dpjp");
-        $this->db->join("dokter d", "rm.instalasi_dpjp = d.id_dokter");
+        $this->db->join("dokter d", "rm.dpjp = d.id_dokter");
         $this->db->where("no_rm", $id);
         $db = $this->db->get("rekam_medis rm");
         return $db;
@@ -138,7 +130,7 @@ class M_beranda extends CI_Model {
 
     function getRMFromRuang($id) {
         $this->db->select("rm.no_rm, d.nama_dokter AS dpjp");
-        $this->db->join("dokter d", "rm.instalasi_dpjp = d.id_dokter");
+        $this->db->join("dokter d", "rm.dpjp = d.id_dokter");
         $this->db->where("id_ruang", $id);
         $db = $this->db->get("rekam_medis rm");
         return $db;
