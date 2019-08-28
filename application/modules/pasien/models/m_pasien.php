@@ -74,11 +74,11 @@ class M_pasien extends CI_Model {
     function getDetailTLForm_Ruang($id) {
         $this->db->select("tri.*, fri.rawat_inap");
         $this->db->join("form_rawat_inap fri", "tri.id_rawat_inap = fri.id_inap");
-        $this->db->join("rekam_medis rm", "tri.no_rm = rm.no_rm");
+        $this->db->join("rekam_medis rm", "tri.id_klpcm = rm.id_klpcm");
         $this->db->where("rm.id_ruang", $id);
         $q = $this->db->get("tl_rawat_inap tri");
 
-        return $query;
+        return $q;
     }
 
     function getDokterLap($taw="",$tak="") {
@@ -86,14 +86,13 @@ class M_pasien extends CI_Model {
         $tl = "T";
         $dat = [];
 
-        $this->db->select("d.id_dokter, d.nama_dokter, COUNT(rm.no_rm) AS total_drm");
+        $this->db->select("d.id_dokter, d.nama_dokter");
         $this->db->from("rekam_medis rm");
         $this->db->join("dokter d", "rm.dpjp = d.id_dokter", "right");
 
         if($taw != "" || $tak != "") {
-            $this->db->join("pasien p", "rm.no_rm = p.no_rm");
-            $this->db->where("tanggal_mrs <=", "$tak");
-            $this->db->where("tanggal_mrs >=", "$taw");
+            $this->db->where("tanggal_mrs <=", $tak);
+            $this->db->where("tanggal_mrs >=", $taw);
         }
 
         $this->db->group_by("d.id_dokter");
@@ -102,44 +101,39 @@ class M_pasien extends CI_Model {
 
         foreach($db->result() as $row) {
             if($taw != "" || $tak != "") {
-                // Hitung DRM Lengkap
-                $this->db->select("
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.identitas='$l' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.otentifikasi='$l' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.lap_penting='$l' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.pencatatan='$l' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak') AS lengkap
-                ");
-                $this->db->from("rekam_medis");
-                $drm_lkp = $this->db->get()->row()->lengkap;
-
-                $this->db->select("
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.identitas='$tl' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.otentifikasi='$tl' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.lap_penting='$tl' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.pencatatan='$tl' AND rm.dpjp=$row->id_dokter AND p.tanggal_mrs BETWEEN '$taw' AND '$tak') AS tdklengkap
-                ");
-                $this->db->from("rekam_medis");
-                $drm_tlkp = $this->db->get()->row()->tdklengkap;
-            } else {
-                // Hitung DRM Lengkap
-                $this->db->select("
-                    (SELECT COUNT(*) FROM rekam_medis WHERE identitas='$l' AND dpjp=$row->id_dokter)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE otentifikasi='$l' AND dpjp=$row->id_dokter)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE lap_penting='$l' AND dpjp=$row->id_dokter)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE pencatatan='$l' AND dpjp=$row->id_dokter) AS lengkap
-                ");
-                $this->db->from("rekam_medis");
-                $drm_lkp = $this->db->get()->row()->lengkap;
+                $sql = "
+                    SELECT IFNULL(SUM(IF(identitas='$l' AND otentifikasi='$l' AND lap_penting='$l' AND pencatatan='$l', 1, 0)), 0) AS lengkap
+                    FROM rekam_medis
+                    WHERE dpjp='$row->id_dokter' AND tanggal_mrs BETWEEN $taw AND $tak
+                ";
+                $res = $this->db->query($sql);
+                $drm_lkp = (empty($res->row()) ? 0 : $res->row()->lengkap);
 
                 // Hitung DRM Tidak Lengkap
-                $this->db->select("
-                    (SELECT COUNT(*) FROM rekam_medis WHERE identitas='$tl' AND dpjp=$row->id_dokter)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE otentifikasi='$tl' AND dpjp=$row->id_dokter)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE lap_penting='$tl' AND dpjp=$row->id_dokter)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE pencatatan='$tl' AND dpjp=$row->id_dokter) AS tdklengkap
-                ");
-                $this->db->from("rekam_medis");
-                $drm_tlkp = $this->db->get()->row()->tdklengkap;
+                $sql = "
+                    SELECT IFNULL(SUM(IF(identitas='$tl' OR otentifikasi='$tl' OR lap_penting='$tl' OR pencatatan='$tl', 1, 0)), 0) AS tdklengkap
+                    FROM rekam_medis
+                    WHERE dpjp='$row->id_dokter' AND tanggal_mrs BETWEEN $taw AND $tak
+                ";
+                $res = $this->db->query($sql);
+                $drm_tlkp = (empty($res->row()) ? 0 : $res->row()->tdklengkap);
+            } else {
+                // Hitung DRM Lengkap
+                $sql = "
+                    SELECT IFNULL(SUM(IF(identitas='$l' AND otentifikasi='$l' AND lap_penting='$l' AND pencatatan='$l', 1, 0)), 0) AS lengkap
+                    FROM rekam_medis
+                    WHERE dpjp='$row->id_dokter'
+                ";
+                $res = $this->db->query($sql);
+                $drm_lkp = (empty($res->row()) ? 0 : $res->row()->lengkap);
+                // Hitung DRM Tidak Lengkap
+                $sql = "
+                    SELECT IFNULL(SUM(IF(identitas='$tl' OR otentifikasi='$tl' OR lap_penting='$tl' OR pencatatan='$tl', 1, 0)), 0) AS tdklengkap
+                    FROM rekam_medis
+                    WHERE dpjp='$row->id_dokter'
+                ";
+                $res = $this->db->query($sql);
+                $drm_tlkp = (empty($res->row()) ? 0 : $res->row()->tdklengkap);
             }
 
             // Persentase
@@ -174,7 +168,7 @@ class M_pasien extends CI_Model {
 
             $data = [
                 "nama_dokter" => $row->nama_dokter,
-                "total_drm" => 4*$row->total_drm,
+                "total_drm" => $total_drm,
                 "drm_lengkap" => $drm_lkp,
                 "drm_tdk_lengkap" => $drm_tlkp,
                 "persen_lengkap" => $p_lkp,
@@ -196,60 +190,57 @@ class M_pasien extends CI_Model {
         $tl = "T";
         $dat = [];
 
-        $this->db->select("r.id_ruang, r.nama_ruang, COUNT(rm.no_rm) AS total_drm");
+        $this->db->select("r.id_ruang, r.nama_ruang");
+        $this->db->from("rekam_medis rm");
         $this->db->join("ruang r", "rm.id_ruang = r.id_ruang", "right");
 
         if($taw != "" || $tak != "") {
-            $this->db->join("pasien p", "rm.no_rm = p.no_rm");
-            $this->db->where("tanggal_mrs <=", "$tak");
-            $this->db->where("tanggal_mrs >=", "$taw");
+            $this->db->where("tanggal_mrs <=", $tak);
+            $this->db->where("tanggal_mrs >=", $taw);
         }
 
         $this->db->group_by("r.id_ruang");
         $this->db->order_by("r.id_ruang");
-        $db = $this->db->get('rekam_medis rm');
-
+        $db = $this->db->get();
         foreach($db->result() as $row) {
             if($taw != "" || $tak != "") {
                 // Hitung DRM Lengkap
-                $this->db->select("
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.identitas='$l' AND rm.id_ruang=$row->id_ruang AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.otentifikasi='$l' AND rm.id_ruang=$row->id_ruang AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.lap_penting='$l' AND rm.id_ruang=$row->id_ruang AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.pencatatan='$l' AND rm.id_ruang=$row->id_ruang AND p.tanggal_mrs BETWEEN '$taw' AND '$tak') AS lengkap
-                ");
-                $this->db->from("rekam_medis");
-                $drm_lkp = $this->db->get()->row()->lengkap;
+                $sql = "
+                    SELECT IFNULL(SUM(IF(identitas='$l' AND otentifikasi='$l' AND lap_penting='$l' AND pencatatan='$l', 1, 0)), 0) AS lengkap
+                    FROM rekam_medis
+                    WHERE id_ruang='$row->id_ruang'
+                    AND tanggal_mrs BETWEEN $taw AND $tak
+                ";
+                $res = $this->db->query($sql);
+                $drm_lkp = (empty($res->row()) ? 0 : $res->row()->lengkap);
 
                 // Hitung DRM Tidak Lengkap
-                $this->db->select("
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.identitas='$tl' AND rm.id_ruang=$row->id_ruang AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.otentifikasi='$tl' AND rm.id_ruang=$row->id_ruang AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.lap_penting='$tl' AND rm.id_ruang=$row->id_ruang AND p.tanggal_mrs BETWEEN '$taw' AND '$tak')+
-                    (SELECT COUNT(rm.no_rm) FROM rekam_medis rm JOIN pasien p ON rm.no_rm = p.no_rm WHERE rm.pencatatan='$tl' AND rm.id_ruang=$row->id_ruang AND p.tanggal_mrs BETWEEN '$taw' AND '$tak') AS tdklengkap
-                ");
-                $this->db->from("rekam_medis");
-                $drm_tlkp = $this->db->get()->row()->tdklengkap;
+                $sql = "
+                    SELECT IFNULL(SUM(IF(identitas='$tl' OR otentifikasi='$tl' OR lap_penting='$tl' OR pencatatan='$tl', 1, 0)), 0) AS tdklengkap
+                    FROM rekam_medis
+                    WHERE id_ruang='$row->id_ruang'
+                    AND tanggal_mrs BETWEEN $taw AND $tak
+                ";
+                $res = $this->db->query($sql);
+                $drm_tlkp = (empty($res->row()) ? 0 : $res->row()->tdklengkap);
             } else {
                 // Hitung DRM Lengkap
-                $this->db->select("
-                    (SELECT COUNT(*) FROM rekam_medis WHERE identitas='$l' AND id_ruang=$row->id_ruang)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE otentifikasi='$l' AND id_ruang=$row->id_ruang)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE lap_penting='$l' AND id_ruang=$row->id_ruang)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE pencatatan='$l' AND id_ruang=$row->id_ruang) AS lengkap
-                ");
-                $this->db->from("rekam_medis");
-                $drm_lkp = $this->db->get()->row()->lengkap;
+                $sql = "
+                    SELECT IFNULL(SUM(IF(identitas='$l' AND otentifikasi='$l' AND lap_penting='$l' AND pencatatan='$l', 1, 0)), 0) AS lengkap
+                    FROM rekam_medis rm
+                    WHERE id_ruang='$row->id_ruang'
+                ";
+                $res = $this->db->query($sql);
+                $drm_lkp = (empty($res->row()) ? 0 : $res->row()->lengkap);
 
                 // Hitung DRM Tidak Lengkap
-                $this->db->select("
-                    (SELECT COUNT(*) FROM rekam_medis WHERE identitas='$tl' AND id_ruang=$row->id_ruang)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE otentifikasi='$tl' AND id_ruang=$row->id_ruang)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE lap_penting='$tl' AND id_ruang=$row->id_ruang)+
-                    (SELECT COUNT(*) FROM rekam_medis WHERE pencatatan='$tl' AND id_ruang=$row->id_ruang) AS tdklengkap
-                ");
-                $this->db->from("rekam_medis");
-                $drm_tlkp = $this->db->get()->row()->tdklengkap;
+                $sql = "
+                    SELECT IFNULL(SUM(IF(identitas='$tl' OR otentifikasi='$tl' OR lap_penting='$tl' OR pencatatan='$tl', 1, 0)), 0) AS tdklengkap
+                    FROM rekam_medis
+                    WHERE id_ruang='$row->id_ruang'
+                ";
+                $res = $this->db->query($sql);
+                $drm_tlkp = (empty($res->row()) ? 0 : $res->row()->tdklengkap);
             }
 
             // Persentase
@@ -284,7 +275,7 @@ class M_pasien extends CI_Model {
 
             $data = [
                 "nama_ruang" => $row->nama_ruang,
-                "total_drm" => 4*$row->total_drm,
+                "total_drm" => $total_drm,
                 "drm_lengkap" => $drm_lkp,
                 "drm_tdk_lengkap" => $drm_tlkp,
                 "persen_lengkap" => $p_lkp,

@@ -283,13 +283,9 @@ class Pasien extends MX_Controller {
 		            <tr class="odd gradeX">
 		                <td width="50">'.$no.'</td>
 		                <td width="200">'.$row['nama_dokter'].'</td>
-		                <td width="50" class="text-center">'.$row['total_drm'].'</td>
 		                <td width="50" class="text-center">'.$row['drm_lengkap'].'</td>
 		                <td width="50" class="text-center">'.$row['drm_tdk_lengkap'].'</td>
-		                <td width="50" class="text-center">'.$row['iden'].'</td>
-                        <td width="50" class="text-center">'.$row['oten'].'</td>
-                        <td width="50" class="text-center">'.$row['lapp'].'</td>
-                        <td width="50" class="text-center">'.$row['catat'].'</td>
+		                <td width="50" class="text-center">'.$row['total_drm'].'</td>
 		                <td width="50" class="text-center">'.$row['persen_lengkap'].' %</td>
 		                <td width="50" class="text-center">'.$row['persen_tdk_lengkap'].' %</td>
 		            </tr>';
@@ -312,13 +308,9 @@ class Pasien extends MX_Controller {
 		            <tr class="odd gradeX">
 		                <td width="50">'.$no.'</td>
 		                <td width="100">'.$row['nama_ruang'].'</td>
-		                <td width="50" class="text-center">'.$row['total_drm'].'</td>
 		                <td width="50" class="text-center">'.$row['drm_lengkap'].'</td>
 		                <td width="50" class="text-center">'.$row['drm_tdk_lengkap'].'</td>
-		                <td width="50" class="text-center">'.$row['iden'].'</td>
-                        <td width="50" class="text-center">'.$row['oten'].'</td>
-                        <td width="50" class="text-center">'.$row['lapp'].'</td>
-                        <td width="50" class="text-center">'.$row['catat'].'</td>
+		                <td width="50" class="text-center">'.$row['total_drm'].'</td>
 		                <td width="50" class="text-center">'.$row['persen_lengkap'].' %</td>
 		                <td width="50" class="text-center">'.$row['persen_tdk_lengkap'].' %</td>
 		            </tr>';

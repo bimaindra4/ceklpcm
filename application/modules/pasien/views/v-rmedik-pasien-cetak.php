@@ -15,6 +15,10 @@
         .tgl-cetak, .tertanda {
             display: block;
         }
+
+        .breadcrumb {
+            display: none;
+        }
     }
 </style>
 
@@ -91,7 +95,7 @@
                         <i class="icon-printer font-dark"></i>
                         <span class="caption-subject uppercase"> Cetak Data KLPCM </span>
                     </div>
-                    <div class="actions">
+                    <div class="actions btn-cetak">
                         <a class="btn blue btn-xs btn-outline" href="#" onclick="window.print()">
                             <i class="fa fa-print"></i> Cetak
                         </a>
@@ -103,16 +107,17 @@
                             <tr>
                                 <th rowspan="2" class="text-center align-middle">No</th>
                                 <th rowspan="2" class="text-center align-middle" id="sortBy">Dokter</th>
-                                <th rowspan="2" class="text-center align-middle">Total<br>DRM</th>
-                                <th rowspan="2" class="text-center align-middle">DRM<br>L</th>
-                                <th rowspan="2" class="text-center align-middle">DRM<br>TL</th>
-                                <th rowspan="2" class="text-center align-middle">ID</th>
+                                <th colspan="2" class="text-center align-middle">Jumlah</th>
+                                <th rowspan="2" class="text-center align-middle">Total</th>
+                                <!-- <th rowspan="2" class="text-center align-middle">ID</th>
                                 <th rowspan="2" class="text-center align-middle">OTF</th>
                                 <th rowspan="2" class="text-center align-middle">LAP</th>
-                                <th rowspan="2" class="text-center align-middle">DOK</th>
+                                <th rowspan="2" class="text-center align-middle">DOK</th> -->
                                 <th colspan="2" class="text-center align-middle">Presentase</th>
                             </tr>
                             <tr>
+                                <th class="text-center align-middle">Lengkap</th>
+                                <th class="text-center align-middle">Belum</th>
                                 <th class="text-center align-middle">Lengkap</th>
                                 <th class="text-center align-middle">Tidak Lengkap</th>
                             </tr>
@@ -120,15 +125,15 @@
                         <tbody id="resultData">
                             <?php $no=1; foreach($dokter_lap as $row) { ?>
                             <tr class="odd gradeX">
-                                <td width="50"><?php echo $no ?></td>
+                                <td width="25" class="text-center"><?php echo $no ?></td>
                                 <td width="200"><?php echo $row['nama_dokter'] ?></td>
-                                <td width="50" class="text-center"><?php echo $row['total_drm'] ?></td>
-                                <td width="50" class="text-center"><?php echo $row['drm_lengkap'] ?></td>
-                                <td width="50" class="text-center"><?php echo $row['drm_tdk_lengkap'] ?></td>
-                                <td width="50" class="text-center"><?php echo $row['iden'] ?></td>
-                                <td width="50" class="text-center"><?php echo $row['oten'] ?></td>
-                                <td width="50" class="text-center"><?php echo $row['lapp'] ?></td>
-                                <td width="50" class="text-center"><?php echo $row['catat'] ?></td>
+                                <td width="30" class="text-center"><?php echo $row['drm_lengkap'] ?></td>
+                                <td width="30" class="text-center"><?php echo $row['drm_tdk_lengkap'] ?></td>
+                                <td width="30" class="text-center"><?php echo $row['total_drm'] ?></td>
+                                <!-- <td width="50" class="text-center"><?php //echo $row['iden'] ?></td>
+                                <td width="50" class="text-center"><?php //echo $row['oten'] ?></td>
+                                <td width="50" class="text-center"><?php //echo $row['lapp'] ?></td>
+                                <td width="50" class="text-center"><?php //echo $row['catat'] ?></td> -->
                                 <td width="50" class="text-center"><?php echo $row['persen_lengkap'] ?> %</td>
                                 <td width="50" class="text-center"><?php echo $row['persen_tdk_lengkap'] ?> %</td>
                             </tr>
