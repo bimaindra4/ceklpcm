@@ -17,7 +17,6 @@
     <div class="row">
         <div class="col-md-12">
             <button data-toggle="modal" data-target="#tambah-pasien" class="btn blue btn-outline" style="margin-bottom: 15px">Tambah KLPCM</button>
-            <button data-toggle="modal" data-target="#import" class="btn green btn-outline pull-right" style="margin-bottom: 15px">Import Data</button>            
             <div class="portlet light bordered">
                 <div class="portlet-title">
                     <div class="caption font-dark">
@@ -63,7 +62,7 @@
                                     <td><?php echo $row['penc'] ?></td>
                                     <td>
                                         <a href="<?php echo site_url('pasien/edit_form/'.$row['id_klpcm']) ?>" class="btn blue btn-xs btn-outline">Edit</a>
-                                        <a href="<?php echo site_url('pasien/hapus_klpcm/'.$row['id_klpcm']) ?>" class="btn red btn-xs btn-outline">Hapus</a>
+                                        <a onclick="deleteKLPCM(<?php echo $row['id_klpcm'] ?>)" href="#" class="btn red btn-xs btn-outline">Hapus</a>
                                     </td>
                                 </tr>
                             <?php $no++; } ?>
@@ -297,33 +296,6 @@
     </div>
 </div>
 
-<div id="import" class="modal fade" tabindex="-1" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog">
-        <?php echo form_open_multipart('pasien/import_pasien', array("class" => "form-control")) ?>
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
-                    <h4 class="modal-title">Import Data Pasien</h4>
-                </div>
-                <div class="modal-body">
-                    <div class="form-body">
-                        <div class="form-group">
-                            <label class="control-label">Upload File (.xls)</label>
-                            <div class="input-group">
-                                <input type="file" name="import">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" data-dismiss="modal" class="btn dark btn-outline">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Upload!</button>
-                </div>
-            </div>
-        <?php echo form_close() ?>
-    </div>
-</div>
-
 <script type="text/javascript">
     let identitas = $('[name="tl_identitas[]"]');
     let otentifikasi = $('[name="tl_otentifikasi[]"]');
@@ -405,6 +377,24 @@
             pencatatan.removeAttr("disabled","off");
             pencatatan.attr("required","on");
         }
+    }
+
+    function deleteKLPCM(val) {
+        swal({
+          title: "Apakah Anda yakin?",
+          text: "Hapus data KLPCM",
+          icon: "warning",
+          buttons: true,
+          dangerMode: true,
+        })
+        .then((willDelete) => {
+          if (willDelete) {
+            swal("Poof! Data Anda terhapus", {
+              icon: "success",
+            });
+            window.location.href = "<?php echo site_url('pasien/hapus_klpcm') ?>/" + val;
+          }
+        });
     }
 
     $(document).ready(function() {
